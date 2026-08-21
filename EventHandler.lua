@@ -21,6 +21,7 @@ f:SetScript("OnEvent", function(self, e, ...)
 end)
 
 function MPT:ToggleEventRegister(On)
+    self.TimerEnabled = On
     if On then
         if not self.Timer then
             self.Timer = C_Timer.NewTimer(self.UpdateRate, function()
@@ -30,6 +31,10 @@ function MPT:ToggleEventRegister(On)
         end
         f:RegisterEvent("UNIT_DIED")
     else
+        if self.Timer then
+            self.Timer:Cancel()
+            self.Timer = nil
+        end
         f:UnregisterEvent("UNIT_DIED")
     end
 end
@@ -137,13 +142,15 @@ function MPT:EventHandler(e, ...) -- internal checks whether the event comes fro
             end)
             self:UpdateTimerBar()
         end
-    elseif e == "FRAME_UPDATE" and C_ChallengeMode.IsChallengeModeActive() then
+    elseif e == "FRAME_UPDATE" and self.TimerEnabled then
+        if C_ChallengeMode.IsChallengeModeActive() then
+            self:UpdateTimerBar()
+        end
         if not self.Timer then
             self.Timer = C_Timer.NewTimer(self.UpdateRate, function()
                 self.Timer = nil
                 self:EventHandler("FRAME_UPDATE")
             end)
-            self:UpdateTimerBar()
         end
 
     elseif e == "PLAYER_LOGIN" then
